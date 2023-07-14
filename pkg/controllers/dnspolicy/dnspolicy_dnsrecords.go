@@ -41,7 +41,7 @@ func (r *DNSPolicyReconciler) reconcileGatewayDNSRecords(ctx context.Context, ga
 
 	gatewayAccessor := traffic.NewGateway(gateway)
 
-	managedHosts, err := r.HostService.GetManagedHosts(ctx, gatewayAccessor)
+	managedHosts, err := r.dnsHelper.getManagedHosts(ctx, gatewayAccessor)
 	if err != nil {
 		return err
 	}
@@ -61,14 +61,15 @@ func (r *DNSPolicyReconciler) reconcileGatewayDNSRecords(ctx context.Context, ga
 	}
 
 	for _, mh := range managedHosts {
+		listener := gatewayAccessor.GetListenerByHost(mh.Host)
+		if listener == nil {
+			log.V(3).Info("no downstream listener found", "host ", mh.Host)
+			continue
+		}
 		var clusterGateways []dns.ClusterGateway
 		for _, downstreamCluster := range clusters {
 			// Only consider host for dns if there's at least 1 attached route to the listener for this host in *any* gateway
-			listener := gatewayAccessor.GetListenerByHost(mh.Host)
-			if listener == nil {
-				log.V(3).Info("no downstream listener found", "host ", mh.Host)
-				continue
-			}
+
 			log.V(3).Info("checking downstream", "listener ", listener.Name)
 			attached, err := r.Placement.ListenerTotalAttachedRoutes(ctx, gateway, string(listener.Name), downstreamCluster)
 			if err != nil {
@@ -97,12 +98,12 @@ func (r *DNSPolicyReconciler) reconcileGatewayDNSRecords(ctx context.Context, ga
 			}
 			return nil
 		}
-		var dnsRecord, err = r.HostService.CreateDNSRecord(ctx, mh.Subdomain, mh.ManagedZone, gateway)
+		var dnsRecord, err = r.dnsHelper.createDNSRecord(ctx, mh.Subdomain, mh.ManagedZone, gateway)
 		if err := client.IgnoreAlreadyExists(err); err != nil {
 			return fmt.Errorf("failed to create dns record for host %s : %s ", mh.Host, err)
 		}
 		if k8serrors.IsAlreadyExists(err) {
-			dnsRecord, err = r.HostService.GetDNSRecord(ctx, mh.Subdomain, mh.ManagedZone, gateway)
+			dnsRecord, err = r.dnsHelper.getDNSRecord(ctx, mh.Subdomain, mh.ManagedZone, gateway)
 			if err != nil {
 				return fmt.Errorf("failed to get dns record for host %s : %s ", mh.Host, err)
 			}
@@ -111,7 +112,7 @@ func (r *DNSPolicyReconciler) reconcileGatewayDNSRecords(ctx context.Context, ga
 		mcgTarget := dns.NewMultiClusterGatewayTarget(gateway, clusterGateways, dnsPolicy.Spec.LoadBalancing)
 		log.Info("setting dns dnsTargets for gateway listener", "listener", dnsRecord.Name, "values", mcgTarget)
 
-		if err := r.HostService.SetEndpoints(ctx, mcgTarget, dnsRecord); err != nil {
+		if err := r.dnsHelper.setEndpoints(ctx, mcgTarget, dnsRecord, listener); err != nil {
 			return fmt.Errorf("failed to add dns record dnsTargets %s %v", err, mcgTarget)
 		}
 
