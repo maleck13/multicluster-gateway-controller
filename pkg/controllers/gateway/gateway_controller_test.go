@@ -19,7 +19,7 @@ import (
 	"github.com/Kuadrant/multicluster-gateway-controller/pkg/apis/v1alpha1"
 	"github.com/Kuadrant/multicluster-gateway-controller/pkg/placement"
 	"github.com/Kuadrant/multicluster-gateway-controller/test"
-	"github.com/Kuadrant/multicluster-gateway-controller/test/util"
+	testutil "github.com/Kuadrant/multicluster-gateway-controller/test/util"
 )
 
 func TestGatewayReconciler_Reconcile(t *testing.T) {
@@ -267,7 +267,6 @@ func TestGatewayReconciler_Reconcile(t *testing.T) {
 				Client:       tt.fields.Client,
 				Scheme:       tt.fields.Scheme,
 				Certificates: test.NewTestCertificateService(tt.fields.Client),
-				HostService:  test.NewTestHostService(tt.fields.Client),
 				Placement:    test.NewTestGatewayPlacer(),
 			}
 			res, err := r.Reconcile(context.TODO(), tt.args.req)
@@ -503,7 +502,6 @@ func TestGatewayReconciler_reconcileDownstreamFromUpstreamGateway(t *testing.T) 
 				Client:       tt.fields.Client,
 				Scheme:       tt.fields.Scheme,
 				Certificates: test.NewTestCertificateService(tt.fields.Client),
-				HostService:  test.NewTestHostService(tt.fields.Client),
 				Placement:    test.NewTestGatewayPlacer(),
 			}
 			requeue, programmedStatus, clusters, err := r.reconcileDownstreamFromUpstreamGateway(context.TODO(), tt.args.gateway, &Params{})
@@ -607,10 +605,9 @@ func TestGatewayReconciler_reconcileTLS(t *testing.T) {
 				Client:       tt.fields.Client,
 				Scheme:       tt.fields.Scheme,
 				Certificates: test.NewTestCertificateService(tt.fields.Client),
-				HostService:  test.NewTestHostService(tt.fields.Client),
 				Placement:    test.NewTestGatewayPlacer(),
 			}
-			got, err := r.reconcileTLS(context.TODO(), tt.args.upstreamGateway, tt.args.gateway, tt.args.managedHosts)
+			got, err := r.reconcileTLS(context.TODO(), tt.args.upstreamGateway, tt.args.gateway)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("reconcileTLS() error = %v, wantErr %v", err, tt.wantErr)
 				return

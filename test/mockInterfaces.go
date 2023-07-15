@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/Kuadrant/multicluster-gateway-controller/pkg/apis/v1alpha1"
 	"github.com/Kuadrant/multicluster-gateway-controller/pkg/dns"
 	"github.com/Kuadrant/multicluster-gateway-controller/pkg/traffic"
 	testutil "github.com/Kuadrant/multicluster-gateway-controller/test/util"
@@ -51,56 +50,56 @@ func NewTestCertificateService(client client.Client) *FakeCertificateService {
 	return &FakeCertificateService{controlClient: client}
 }
 
-type FakeHostService struct {
-	controlClient client.Client
-}
+// type FakeHostService struct {
+// 	controlClient client.Client
+// }
 
-func (h *FakeHostService) GetDNSRecordsFor(_ context.Context, _ traffic.Interface) ([]*v1alpha1.DNSRecord, error) {
-	return nil, nil
-}
+// func (h *FakeHostService) GetDNSRecordsFor(_ context.Context, _ traffic.Interface) ([]*v1alpha1.DNSRecord, error) {
+// 	return nil, nil
+// }
 
-func (h *FakeHostService) CleanupDNSRecords(_ context.Context, _ traffic.Interface) error {
-	return nil
-}
+// func (h *FakeHostService) CleanupDNSRecords(_ context.Context, _ traffic.Interface) error {
+// 	return nil
+// }
 
-func (h *FakeHostService) CreateDNSRecord(_ context.Context, subDomain string, _ *v1alpha1.ManagedZone, _ v1.Object) (*v1alpha1.DNSRecord, error) {
-	if subDomain == testutil.FailCreateDNSSubdomain {
-		return nil, fmt.Errorf(testutil.FailCreateDNSSubdomain)
-	}
-	record := v1alpha1.DNSRecord{}
-	return &record, nil
-}
+// func (h *FakeHostService) CreateDNSRecord(_ context.Context, subDomain string, _ *v1alpha1.ManagedZone, _ v1.Object) (*v1alpha1.DNSRecord, error) {
+// 	if subDomain == testutil.FailCreateDNSSubdomain {
+// 		return nil, fmt.Errorf(testutil.FailCreateDNSSubdomain)
+// 	}
+// 	record := v1alpha1.DNSRecord{}
+// 	return &record, nil
+// }
 
-func (h *FakeHostService) GetDNSRecord(ctx context.Context, subDomain string, managedZone *v1alpha1.ManagedZone, _ v1.Object) (*v1alpha1.DNSRecord, error) {
-	if subDomain == testutil.FailFetchDANSSubdomain {
-		return &v1alpha1.DNSRecord{}, fmt.Errorf(testutil.FailFetchDANSSubdomain)
-	}
-	record := &v1alpha1.DNSRecord{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      managedZone.Spec.DomainName,
-			Namespace: managedZone.GetNamespace(),
-		},
-	}
+// func (h *FakeHostService) GetDNSRecord(ctx context.Context, subDomain string, managedZone *v1alpha1.ManagedZone, _ v1.Object) (*v1alpha1.DNSRecord, error) {
+// 	if subDomain == testutil.FailFetchDANSSubdomain {
+// 		return &v1alpha1.DNSRecord{}, fmt.Errorf(testutil.FailFetchDANSSubdomain)
+// 	}
+// 	record := &v1alpha1.DNSRecord{
+// 		ObjectMeta: v1.ObjectMeta{
+// 			Name:      managedZone.Spec.DomainName,
+// 			Namespace: managedZone.GetNamespace(),
+// 		},
+// 	}
 
-	if err := h.controlClient.Get(ctx, client.ObjectKeyFromObject(record), record); err != nil {
-		return nil, err
-	}
-	return record, nil
-}
+// 	if err := h.controlClient.Get(ctx, client.ObjectKeyFromObject(record), record); err != nil {
+// 		return nil, err
+// 	}
+// 	return record, nil
+// }
 
-func (h *FakeHostService) AddEndpoints(_ context.Context, gateway traffic.Interface, _ *v1alpha1.DNSRecord) error {
-	hosts := gateway.GetHosts()
-	for _, host := range hosts {
-		if host == testutil.FailEndpointsHostname {
-			return fmt.Errorf(testutil.FailEndpointsHostname)
-		}
-	}
-	return nil
-}
+// func (h *FakeHostService) AddEndpoints(_ context.Context, gateway traffic.Interface, _ *v1alpha1.DNSRecord) error {
+// 	hosts := gateway.GetHosts()
+// 	for _, host := range hosts {
+// 		if host == testutil.FailEndpointsHostname {
+// 			return fmt.Errorf(testutil.FailEndpointsHostname)
+// 		}
+// 	}
+// 	return nil
+// }
 
-func NewTestHostService(client client.Client) *FakeHostService {
-	return &FakeHostService{controlClient: client}
-}
+// func NewTestHostService(client client.Client) *FakeHostService {
+// 	return &FakeHostService{controlClient: client}
+// }
 
 type FakeGatewayPlacer struct{}
 
