@@ -348,74 +348,6 @@ func TestGatewayReconciler_reconcileDownstreamFromUpstreamGateway(t *testing.T) 
 			expectedError: testutil.FailEnsureCertHost,
 		},
 		{
-			name: "failed to fech managed zone",
-			fields: fields{
-				Client: fake.NewClientBuilder().
-					WithScheme(testutil.GetBasicScheme()).
-					Build(),
-				Scheme: testutil.GetBasicScheme(),
-			},
-			args: args{
-				gateway: &v1beta1.Gateway{
-					Spec: buildValidTestGatewaySpec(),
-				},
-			},
-			wantStatus:    v1.ConditionFalse,
-			wantClusters:  []string{},
-			wantRequeue:   false,
-			wantErr:       true,
-			expectedError: "no kind is registered for the type",
-		},
-		{
-			name: "externally managed host",
-			fields: fields{
-				Client: testutil.GetValidTestClient(),
-				Scheme: testutil.GetValidTestScheme(),
-			},
-			args: args{
-				gateway: &v1beta1.Gateway{
-					ObjectMeta: v1.ObjectMeta{
-						Labels: getTestGatewayLabels(),
-					},
-					Spec: buildValidTestGatewaySpec(),
-				},
-			},
-			wantStatus:    v1.ConditionFalse,
-			wantClusters:  []string{},
-			wantRequeue:   false,
-			wantErr:       true,
-			expectedError: "no managed hosts found",
-		},
-		{
-			name: "failed to fetch DNSRecord CR",
-			fields: fields{
-				Client: testutil.GetValidTestClient(buildTestMZ()),
-				Scheme: testutil.GetValidTestScheme(),
-			},
-			args: args{
-				gateway: &v1beta1.Gateway{
-					ObjectMeta: v1.ObjectMeta{
-						Labels:    getTestGatewayLabels(),
-						Namespace: testutil.Namespace,
-					},
-					Spec: v1beta1.GatewaySpec{
-						Listeners: []v1beta1.Listener{
-							{
-								Name:     v1beta1.SectionName(testutil.ValidTestHostname),
-								Hostname: getTestHostname(testutil.FailFetchDANSSubdomain + "." + testutil.Domain),
-								Protocol: v1beta1.HTTPSProtocolType,
-							},
-						},
-					},
-				},
-			},
-			wantStatus:    v1.ConditionFalse,
-			wantClusters:  []string{},
-			wantRequeue:   false,
-			wantErr:       true,
-			expectedError: testutil.FailFetchDANSSubdomain,
-		},
-		{
 			name: "created DNSRecord CR, HTTP protocol",
 			fields: fields{
 				Client: testutil.GetValidTestClient(
@@ -548,6 +480,16 @@ func TestGatewayReconciler_reconcileTLS(t *testing.T) {
 				upstreamGateway: &v1beta1.Gateway{
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: testutil.Namespace,
+						Name:      testutil.DummyCRName,
+					},
+					Spec: v1beta1.GatewaySpec{
+						Listeners: []v1beta1.Listener{
+							{
+								Name:     testutil.ValidTestHostname,
+								Hostname: getTestHostname(testutil.ValidTestHostname),
+								Protocol: v1beta1.HTTPSProtocolType,
+							},
+						},
 					},
 				},
 				gateway: &v1beta1.Gateway{

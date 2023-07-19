@@ -361,8 +361,6 @@ func (r *GatewayReconciler) reconcileTLS(ctx context.Context, upstreamGateway *g
 	accessor := traffic.NewGateway(gateway)
 	for _, listener := range upstreamGateway.Spec.Listeners {
 		host := string(*listener.Hostname)
-		//for _, mh := range managedHosts {
-		// Only generate cert for https listeners
 
 		if listener.Protocol != gatewayv1beta1.HTTPSProtocolType {
 			continue
